@@ -108,16 +108,6 @@ class UserDTO
     /**
      * @OA\Property(
      *     type="string",
-     *     title="Photo",
-     *     description="Photo"
-     * )
-     * @Serializer\Type("string")
-     */
-    private $photo;
-
-    /**
-     * @OA\Property(
-     *     type="string",
      *     title="NameCompany",
      *     description="Photo"
      * )
@@ -204,16 +194,6 @@ class UserDTO
     public function setCreatedAt($createdAt): void
     {
         $this->createdAt = $createdAt;
-    }
-
-    public function getPhoto()
-    {
-        return $this->photo;
-    }
-
-    public function setPhoto($photo): void
-    {
-        $this->photo = $photo;
     }
 
     public function getNameCompany()

@@ -59,10 +59,6 @@ class User implements UserInterface
      */
     private $createdAt;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $photo;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
@@ -208,17 +204,6 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getPhoto(): ?string
-    {
-        return $this->photo;
-    }
-
-    public function setPhoto(?string $photo): self
-    {
-        $this->photo = $photo;
-
-        return $this;
-    }
 
     public function getNameCompany(): ?string
     {
@@ -273,7 +258,6 @@ class User implements UserInterface
         $user->setPatronymic($userDTO->getPatronymic());
         $user->setCreatedAt(new DateTime($userDTO->getCreatedAt()));
         $user->setNameCompany($userDTO->getNameCompany());
-        $user->setPhoto($userDTO->getPhoto());
 
         return $user;
     }

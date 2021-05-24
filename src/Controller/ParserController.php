@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Parser\Parser;
 use App\Parser\Review;
+use App\Repository\UserRepository;
 use OpenApi\Annotations as OA;
 use PhpQuery\PhpQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -109,7 +110,7 @@ class ParserController extends AbstractController
      *     )
      *  )
      */
-    public function mvideo(Request $request, SerializerInterface $serializer): Response
+    public function mvideo(Request $request, SerializerInterface $serializer, UserRepository $userRepository): Response
     {
         try {
             // ссылка на продукт
@@ -199,8 +200,11 @@ class ParserController extends AbstractController
             // сериализуем в json
             $data = $serializer->serialize($reviews, 'json');
 
+            // найдем id юзера
+            $user = $this->getUser();
+            $user = $userRepository->findOneBy(['email' => $user->getUsername()]);
             // сохраняем в файл
-            $this->saveJson($idProduct, $data);
+            $this->saveJson($idProduct, $user->getId(), $data);
 
             // Код ответа 201
             $dataResponse = [
@@ -222,9 +226,9 @@ class ParserController extends AbstractController
         return $response;
     }
 
-    public function saveJson($idProduct, $dataJson): void
+    public function saveJson($idProduct, $idUser, $dataJson): void
     {
-        $path = './data_users/1/json/'.$idProduct.'_'.date('Y-m-d_H-i-s').'.json';
+        $path = './data_users/'.$idUser.'/json/'.$idProduct.'_'.date('Y-m-d_H-i-s').'.json';
         $fp = fopen($path, 'w');
         fwrite($fp, $dataJson);
         fclose($fp);

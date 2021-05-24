@@ -122,16 +122,6 @@ class AuthController extends AbstractController
      *                  example="2021-05-10 10:15:13"
      *              ),
      *              @OA\Property(
-     *                  property="photo",
-     *                  type="string",
-     *                  example="user/photo/..."
-     *              ),
-     *              @OA\Property(
-     *                  property="nameCompany",
-     *                  type="string",
-     *                  example="М.видео"
-     *              ),
-     *              @OA\Property(
      *                  property="nameCompany",
      *                  type="string",
      *                  example="М.видео"
@@ -237,6 +227,17 @@ class AuthController extends AbstractController
             $refreshToken->setValid((new \DateTime())->modify('+1 month'));
             $refreshTokenManager->save($refreshToken);
 
+            // Создадим папку пользователю, в которой он будет хранить комментарии в json
+            if (!mkdir($concurrentDirectory = './data_users/'.$user->getId().'/json', 0777, true)
+                && !is_dir($concurrentDirectory)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            }
+            // и отчеты
+            if (!mkdir($concurrentDirectory = './data_users/'.$user->getId().'/reports', 0777, true)
+                && !is_dir($concurrentDirectory)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            }
+
             $data = [
                 // JWT token
                 'token' => $JWTManager->create($user),
@@ -299,6 +300,7 @@ class AuthController extends AbstractController
      * )
      *
      * @Route("/token/refresh", name="refresh", methods={"POST"})
+     *
      * @return mixed
      */
     public function refresh(Request $request, RefreshToken $refreshService)
