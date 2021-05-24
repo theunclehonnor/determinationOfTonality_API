@@ -1,0 +1,37 @@
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="objectTypeId"
+
+610d4c8e-37fc-416c-a603-bce518d57c15
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="objectId"
+
+5bcf6838-49e2-11e9-ad30-00155d03330f
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="isRealBuyer"
+
+0
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="hasPhotos"
+
+0
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="source"
+
+0
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="grade"
+
+0
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="sort"
+
+0
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="offset"
+
+20
+-----------------------------304510225221279863302242575445
+Content-Disposition: form-data; name="limit"
+
+10
+-----------------------------304510225221279863302242575445--

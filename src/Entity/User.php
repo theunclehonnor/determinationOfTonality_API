@@ -2,7 +2,9 @@
 
 namespace App\Entity;
 
+use App\Model\UserDTO;
 use App\Repository\UserRepository;
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -10,7 +12,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
- * @ORM\Table(name="`user`")
+ * @ORM\Table(name="api_user")
  */
 class User implements UserInterface
 {
@@ -258,5 +260,21 @@ class User implements UserInterface
         }
 
         return $this;
+    }
+
+    public static function fromDTO(UserDTO $userDTO): self
+    {
+        $user = new self();
+        $user->setEmail($userDTO->getEmail());
+        $user->setRoles(['ROLE_USER']);
+        $user->setPassword($userDTO->getPassword());
+        $user->setSurname($userDTO->getSurname());
+        $user->setName($userDTO->getName());
+        $user->setPatronymic($userDTO->getPatronymic());
+        $user->setCreatedAt(new DateTime($userDTO->getCreatedAt()));
+        $user->setNameCompany($userDTO->getNameCompany());
+        $user->setPhoto($userDTO->getPhoto());
+
+        return $user;
     }
 }
