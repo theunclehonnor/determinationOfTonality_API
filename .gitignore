@@ -1,4 +1,5 @@
 .idea/
+./public/data_users/
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
