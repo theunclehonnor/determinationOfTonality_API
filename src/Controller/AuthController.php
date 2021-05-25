@@ -104,17 +104,17 @@ class AuthController extends AbstractController
      *              @OA\Property(
      *                  property="surname",
      *                  type="string",
-     *                  example="Иванов"
+     *                  example="Артуров"
      *              ),
      *              @OA\Property(
      *                  property="name",
      *                  type="string",
-     *                  example="Иван"
+     *                  example="Артур"
      *              ),
      *              @OA\Property(
      *                  property="patronymic",
      *                  type="string",
-     *                  example="Ивананович"
+     *                  example="Артурович"
      *              ),
      *              @OA\Property(
      *                  property="createdAt",

@@ -115,25 +115,35 @@ class ParserController extends AbstractController
         try {
             // ссылка на продукт
             $url = json_decode($request->getContent(), true)['url'];
+            // Проверяем что ссылка действительно на м-видео
+            $checkUrl = explode('/', $url);
+            if ('www.mvideo.ru' !== $checkUrl[2] || 'products' !== $checkUrl[3]) {
+                throw new \Exception('Некорректная ссылка', Response::HTTP_BAD_REQUEST);
+            }
             // Вызываем метод парсинга страницы
             $html = $this->generateHtml(
                 $url,
-                'Mozilla/5.0 (X10; Ubuntu; Linux x86_64; rv:88.0)',
-                150,
-                150,
+                null,
+                15,
+                15,
                 null,
                 [
                     'file' => 'cookie.txt', // string Файл для хранения cookie
-                    'session' => false, // bool Для указания текущему сеансу начать новую "сессию" cookies
+                    'session' => true, // bool Для указания текущему сеансу начать новую "сессию" cookies
                 ]
             );
-
             //_______________________Работаем с документом для получения заголовков, кол-во отзывов и т.д._____________
             // Создаем документ
             $mainDocument = PhpQuery::newDocument('<meta charset="utf-8">'.$html);
             // Находим заголовок h1 с названием продукта
             $entry = $mainDocument->find('h1');
-            $data['h1'] = PhpQuery::pq($entry)->text();
+            $mvideoData['h1'] = PhpQuery::pq($entry)->text();
+            $string = htmlentities($mvideoData['h1'], null, 'utf-8');
+            $mvideoData['h1'] = str_replace(' ', '', $string);
+            $mvideoData['h1'] = html_entity_decode($mvideoData['h1']);
+            if ('Cтраница не найдена.' === $mvideoData['h1']) {
+                throw new \Exception('Страница с данным продуктом не найдена', Response::HTTP_BAD_REQUEST);
+            }
             // Выгрузим количество отзывов
             $countReviews = $mainDocument->find('span.c-star-rating_reviews-qty:first')->text();
             // Если отзывов не найдено
@@ -154,8 +164,8 @@ class ParserController extends AbstractController
             $reviewsHtml = $this->generateHtml(
                 $urlReviews,
                 'Mozilla/5.0 (X10; Ubuntu; Linux x86_64; rv:88.0)',
-                150,
-                150,
+                20,
+                20,
                 null,
                 [
                     'file' => 'cookie.txt', // string Файл для хранения cookie
@@ -185,15 +195,18 @@ class ParserController extends AbstractController
                 // плюсы, минусы и отзыв
                 $plusMinusDescription = PhpQuery::pq($reviewSelectors)->find('.review-ext-item-description-item:first');
                 $plusMinusDescription_p = PhpQuery::pq($plusMinusDescription)->find('p');
-                $review->setPluses($plusMinusDescription_p->text() ?: null);
+                $text = trim($plusMinusDescription_p->text(), "\ \t\n\r\0\x0B");
+                $review->setPluses($text ?: null);
                 // плюсы
                 $plusMinusDescription = PhpQuery::pq($plusMinusDescription)->next();
                 $plusMinusDescription_p = PhpQuery::pq($plusMinusDescription)->find('p');
-                $review->setMinuses($plusMinusDescription_p->text() ?: null);
+                $text = trim($plusMinusDescription_p->text(), "\ \t\n\r\0\x0B");
+                $review->setMinuses($text ?: null);
                 // минусы
                 $plusMinusDescription = PhpQuery::pq($plusMinusDescription)->next();
                 $plusMinusDescription_p = PhpQuery::pq($plusMinusDescription)->find('p');
-                $review->setDescription($plusMinusDescription_p->text() ?: null);
+                $text = trim($plusMinusDescription_p->text(), "\ \t\n\r\0\x0B");
+                $review->setDescription($text ?: null);
                 // отзыв
                 $reviews[] = $review;
             }
@@ -204,7 +217,252 @@ class ParserController extends AbstractController
             $user = $this->getUser();
             $user = $userRepository->findOneBy(['email' => $user->getUsername()]);
             // сохраняем в файл
-            $this->saveJson($idProduct, $user->getId(), $data);
+            $this->saveJson('mvideo_'.$idProduct, $user->getId(), $data);
+
+            // Код ответа 201
+            $dataResponse = [
+                'code' => Response::HTTP_CREATED,
+                'success' => true,
+            ];
+        } catch (\Exception $e) {
+            // ошибка
+            $dataResponse = [
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ];
+        }
+        $response = new Response();
+        $response->setStatusCode($dataResponse['code']);
+        $response->setContent($serializer->serialize($dataResponse, 'json'));
+        $response->headers->add(['Content-Type' => 'application/json']);
+
+        return $response;
+    }
+
+    /**
+     * @Route("/prodoctorov", name="api_parser_prodoctorov", methods={"POST"})
+     * @OA\Post (
+     *     path="/api/v1/parser/prodoctorov",
+     *     tags={"Parser"},
+     *     summary="Парсер отзывов с Продокторов (отзывы о врачах)",
+     *     description="Парсер отзывов с Продокторов (отзывы о врачах)",
+     *     security={
+     *         { "Bearer":{} },
+     *     },
+     *     @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(
+     *                  property="url",
+     *                  type="string",
+     *                  example="https://prodoctorov.ru/lipeck/vrach/330713-benammar/#otzivi"
+     *              ),
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="201",
+     *          description="Отзывы успешно получены",
+     *          @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="code",
+     *                     type="string",
+     *                     example="201"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="success",
+     *                     type="bool",
+     *                     example="true"
+     *                 ),
+     *             ),
+     *        )
+     *     ),
+     *     @OA\Response(
+     *          response="400",
+     *          description="Некорректная ссылка",
+     *          @OA\JsonContent(
+     *              @OA\Property(
+     *                  property="code",
+     *                  type="string",
+     *                  example="400"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string",
+     *                  example="Некорректная ссылка"
+     *              )
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="401",
+     *          description="Invalid JWT token",
+     *          @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="code",
+     *                     type="string",
+     *                     example="401",
+     *                 ),
+     *                 @OA\Property(
+     *                     property="message",
+     *                     type="string",
+     *                     example="Invalid JWT Token",
+     *                 ),
+     *             ),
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="404",
+     *          description="Врач или отзыв по данной ссылке не найден",
+     *          @OA\JsonContent(
+     *              @OA\Property(
+     *                  property="code",
+     *                  type="string",
+     *                  example="404"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string",
+     *                  example="Врач по данной ссылке не найден"
+     *              )
+     *          )
+     *     )
+     *  )
+     */
+    public function prodoctorov(
+        Request $request,
+        SerializerInterface $serializer,
+        UserRepository $userRepository
+    ): Response {
+        try {
+            // ссылка на врача с продокторов
+            $url = json_decode($request->getContent(), true)['url'];
+            // Проверяем что ссылка действительно на отзыве о враче с продокторов
+            $checkUrl = explode('/', $url);
+            if ('prodoctorov.ru' !== $checkUrl[2] || 'vrach' !== $checkUrl[4] || '#otzivi' !== $checkUrl[6]) {
+                throw new \Exception('Некорректная ссылка', Response::HTTP_BAD_REQUEST);
+            }
+            // Вызываем метод парсинга страницы
+            $html = $this->generateHtml(
+                $url,
+                null,
+                15,
+                15,
+                null,
+                [
+                    'file' => 'cookie.txt', // string Файл для хранения cookie
+                    'session' => true, // bool Для указания текущему сеансу начать новую "сессию" cookies
+                ]
+            );
+            //_______________________Работаем с документом для получения заголовков, кол-во отзывов и т.д._____________
+            // Создаем документ
+            $mainDocument = PhpQuery::newDocument('<meta charset="utf-8">'.$html);
+            // Находим заголовок h1 с названием врача
+            $h1 = $mainDocument->find('h1');
+            $entry = $h1->find('span[itemprop=name]');
+            if ('' === $entry->text()) {
+                $entry = $h1;
+            }
+            $mvideoData['h1'] = PhpQuery::pq($entry)->text();
+            if ('На этой странице ничего нет' === $mvideoData['h1']) {
+                throw new \Exception('Страница с введеными данным не найдена', Response::HTTP_BAD_REQUEST);
+            }
+            //_______________________Выгружаем отзывы________________________________
+            // все отзывы со страницы
+            $allReviews = $mainDocument->find('div[itemprop=review]');
+            if (0 === count($allReviews)) {
+                throw new \Exception('На данной странице нет отзывов', Response::HTTP_NOT_FOUND);
+            }
+            // класс содержащий все отзывы
+            /** @var Review[] $reviews */
+            $reviews = [];
+            // цикл по отзывам
+            foreach ($allReviews as $reviewSelectors) {
+                $review = new Review();
+                // дата
+                $date = PhpQuery::pq($reviewSelectors)->find('div[itemprop=datePublished]');
+                $review->setDate($date ? $date->attr('content') : null);
+
+                // оценка
+                $rating = PhpQuery::pq($reviewSelectors)->find('span.b-review-card__rate-num')->text();
+                //избавляемся от символов - и +
+                $rating = trim($rating, '+');
+                $rating = trim($rating, '-');
+                $review->setRating($rating ? (float) $rating : null);
+
+                // плюсы, минусы и отзыв
+                $first = PhpQuery::pq($reviewSelectors)->find('.b-review-card__comment-wrapper:first');
+                if (null === $first) {
+                    $review->setPluses(null);
+                    $review->setMinuses(null);
+                    $review->setDescription(null);
+                } elseif ('Понравилось' === $first->find('.b-review-card__comment-title')->text()) {
+                    $text = trim(
+                        $first->find('.b-review-card__comment')->text(),
+                        "\ \t\n\r\0\x0B"
+                    );
+                    $review->setPluses($text);
+                } elseif ('Не понравилось' === $first->find('.b-review-card__comment-title')->text()) {
+                    $review->setPluses(null);
+                    $text = trim(
+                        $first->find('.b-review-card__comment')->text(),
+                        "\ \t\n\r\0\x0B"
+                    );
+                    $review->setMinuses($text);
+                } elseif ('Комментарий' === $first->find('.b-review-card__comment-title')->text()) {
+                    $review->setPluses(null);
+                    $review->setMinuses(null);
+                    $text = trim(
+                        $first->find('.b-review-card__comment')->text(),
+                        "\ \t\n\r\0\x0B"
+                    );
+                    $review->setDescription($text);
+                }
+
+                $second = $first->next();
+                if (null === $second) {
+                    $review->setMinuses(null);
+                    $review->setDescription(null);
+                } elseif ('Не понравилось' === $second->find('.b-review-card__comment-title')->text()) {
+                    $text = trim(
+                        $second->find('.b-review-card__comment')->text(),
+                        "\ \t\n\r\0\x0B"
+                    );
+                    $review->setMinuses($text);
+                } elseif ('Комментарий' === $second->find('.b-review-card__comment-title')->text()) {
+                    $review->setMinuses(null);
+                    $text = trim(
+                        $second->find('.b-review-card__comment')->text(),
+                        "\ \t\n\r\0\x0B"
+                    );
+                    $review->setDescription($text);
+                }
+
+                $third = $second->next();
+                if (null === $third) {
+                    $review->setDescription(null);
+                } elseif ('Комментарий' === $third->find('.b-review-card__comment-title')->text()) {
+                    $text = trim(
+                        $third->find('.b-review-card__comment')->text(),
+                        "\ \t\n\r\0\x0B"
+                    );
+                    $review->setDescription($text);
+                }
+                // отзыв
+                $reviews[] = $review;
+            }
+            // сериализуем в json
+            $data = $serializer->serialize($reviews, 'json');
+
+            // id доктора
+            $idDoctor = $checkUrl[5];
+            // найдем id юзера
+            $user = $this->getUser();
+            $user = $userRepository->findOneBy(['email' => $user->getUsername()]);
+            // сохраняем в файл
+            $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $data);
 
             // Код ответа 201
             $dataResponse = [
