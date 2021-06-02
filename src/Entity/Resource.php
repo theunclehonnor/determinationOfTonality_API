@@ -27,11 +27,6 @@ class Resource
      */
     private $link;
 
-    /**
-     * @ORM\OneToOne(targetEntity=ObjectInQuestion::class, cascade={"persist", "remove"})
-     */
-    private $objectInQuestion;
-
 
     public function getId(): ?int
     {
@@ -58,18 +53,6 @@ class Resource
     public function setLink(string $link): self
     {
         $this->link = $link;
-
-        return $this;
-    }
-
-    public function getObjectInQuestion(): ?ObjectInQuestion
-    {
-        return $this->objectInQuestion;
-    }
-
-    public function setObjectInQuestion(?ObjectInQuestion $objectInQuestion): self
-    {
-        $this->objectInQuestion = $objectInQuestion;
 
         return $this;
     }

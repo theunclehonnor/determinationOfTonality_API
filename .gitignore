@@ -1,5 +1,6 @@
 .idea/
 /public/data_users/
+/public/Models/
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php

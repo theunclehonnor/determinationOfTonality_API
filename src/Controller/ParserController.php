@@ -2,8 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\Model;
+use App\Entity\ObjectInQuestion;
+use App\Entity\Report;
+use App\Entity\Resource;
+use App\Entity\User;
 use App\Parser\Parser;
 use App\Parser\Review;
+use App\Repository\ModelRepository;
+use App\Repository\ResourceRepository;
 use App\Repository\UserRepository;
 use OpenApi\Annotations as OA;
 use PhpQuery\PhpQuery;
@@ -35,6 +42,25 @@ class ParserController extends AbstractController
      *                  property="url",
      *                  type="string",
      *                  example="https://www.mvideo.ru/products/smartfon-vivo-y31-chernyi-asfalt-v2036-30054937"
+     *              ),
+     *              @OA\Property(
+     *                  property="model",
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="name",
+     *                      type="string",
+     *                      example="BagOfWords"
+     *                  ),
+     *                  @OA\Property(
+     *                      property="dataSet",
+     *                      type="string",
+     *                      example="womenShop"
+     *                  ),
+     *                  @OA\Property(
+     *                      property="classificator",
+     *                      type="string",
+     *                      example="MultinomialNB"
+     *                  ),
      *              ),
      *          )
      *     ),
@@ -94,7 +120,7 @@ class ParserController extends AbstractController
      *     ),
      *     @OA\Response(
      *          response="404",
-     *          description="Товар или отзыв не найден",
+     *          description="Товар / отзыв не найден",
      *          @OA\JsonContent(
      *              @OA\Property(
      *                  property="code",
@@ -257,6 +283,25 @@ class ParserController extends AbstractController
      *                  type="string",
      *                  example="https://prodoctorov.ru/lipeck/vrach/330713-benammar/#otzivi"
      *              ),
+     *              @OA\Property(
+     *                  property="model",
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="name",
+     *                      type="string",
+     *                      example="BagOfWords"
+     *                  ),
+     *                  @OA\Property(
+     *                      property="dataSet",
+     *                      type="string",
+     *                      example="womenShop"
+     *                  ),
+     *                  @OA\Property(
+     *                      property="classificator",
+     *                      type="string",
+     *                      example="MultinomialNB"
+     *                  ),
+     *              ),
      *          )
      *     ),
      *     @OA\Response(
@@ -334,11 +379,23 @@ class ParserController extends AbstractController
     public function prodoctorov(
         Request $request,
         SerializerInterface $serializer,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        ModelRepository $modelRepository,
+        ResourceRepository $resourceRepository
     ): Response {
         try {
             // ссылка на врача с продокторов
             $url = json_decode($request->getContent(), true)['url'];
+            $modelDto = json_decode($request->getContent(), true)['model'];
+            if (!$url) {
+                throw new \Exception('Некорректная ссылка', Response::HTTP_BAD_REQUEST);
+            }
+            if (!$modelDto) {
+                throw new \Exception('Некорректная модель', Response::HTTP_BAD_REQUEST);
+            }
+            // Проверяем модель на всякий случай и получаем её из БД
+            $model = $this->checkModel($modelDto, $modelRepository);
+
             // Проверяем что ссылка действительно на отзыве о враче с продокторов
             $checkUrl = explode('/', $url);
             if ('prodoctorov.ru' !== $checkUrl[2] || 'vrach' !== $checkUrl[4] || '#otzivi' !== $checkUrl[6]) {
@@ -462,8 +519,10 @@ class ParserController extends AbstractController
             $user = $this->getUser();
             $user = $userRepository->findOneBy(['email' => $user->getUsername()]);
             // сохраняем в файл
-            $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $data);
+            $pathFileReviews = $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $data);
 
+            // Заполнение оставшихся сущностей
+            $this->createOtherEntity('М.видео', $url, $model, $pathFileReviews);
             // Код ответа 201
             $dataResponse = [
                 'code' => Response::HTTP_CREATED,
@@ -484,12 +543,35 @@ class ParserController extends AbstractController
         return $response;
     }
 
-    public function saveJson($idProduct, $idUser, $dataJson): void
+    public function checkModel($modelDto, ModelRepository $modelRepository): Model
+    {
+        try {
+            /** @var Model $model */
+            $model = $modelRepository->findOneBy(
+                [
+                    'name' => $modelDto['name'],
+                    'dataSet' => $modelDto['dataSet'],
+                    'classificator' => $modelDto['classificator'],
+                ]
+            );
+            if (!$model) {
+                throw new \Exception('Данной модели несуществует', Response::HTTP_NOT_FOUND);
+            }
+        } catch (\Exception $e) {
+            throw new \Exception($e);
+        }
+
+        return $model;
+    }
+
+    public function saveJson($idProduct, $idUser, $dataJson): string
     {
         $path = './data_users/'.$idUser.'/json/'.$idProduct.'_'.date('Y-m-d_H-i-s').'.json';
         $fp = fopen($path, 'w');
         fwrite($fp, $dataJson);
         fclose($fp);
+
+        return $path;
     }
 
     public function generateHtml(
@@ -523,5 +605,50 @@ class ParserController extends AbstractController
         }
         // html страницу
         return $arHtml['data']['content'];
+    }
+
+    public function createOtherEntity(
+        $nameResource,
+        $url,
+        $model,
+        $pathFileReviews
+    ) {
+        try {
+            $entityManager = $this->getDoctrine()->getManager();
+            // Найдём в базе наш Веб-ресурс
+            $resourceRepository = $entityManager->getRepository(Resource::class);
+            /** @var resource $resource */
+            $resource = $resourceRepository->findOneBy(['name' => $nameResource]);
+            if (!$resource) {
+                throw new \Exception();
+            }
+            // Заполнение данными Рассматривыемый объект
+            $objectInQuestion = new ObjectInQuestion();
+            $objectInQuestion->setLink($url);
+            $objectInQuestion->setModel($model);
+            $objectInQuestion->setFileReviews($pathFileReviews);
+            $objectInQuestion->setResource($resource);
+
+            $entityManager->persist($objectInQuestion);
+
+            // Заполнение данными Отчет
+            $report = new Report();
+            $report->setCreatedAt((new \DateTime())->setTimezone(new \DateTimeZone('Europe/Moscow')));
+            $report->setObjectInQuestion($objectInQuestion);
+            /** @var User $user */
+            $user = $entityManager->getRepository(User::class)->findOneBy(
+                ['email' => $this->getUser()->getUsername()]
+            );
+            if (!$user) {
+                throw new \Exception();
+            }
+            $report->setUserApi($user);
+            // Нужно ещё сформировать отчёт
+            $entityManager->persist($report);
+
+            $entityManager->flush();
+        } catch (\Exception $e) {
+            throw new \Exception('Непредвиденная ошибка: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

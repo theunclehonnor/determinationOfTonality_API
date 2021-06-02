@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ObjectInQuestionRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -23,16 +25,6 @@ class ObjectInQuestion
     private $link;
 
     /**
-     * @ORM\Column(type="datetime")
-     */
-    private $createdAt;
-
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $expiresAt;
-
-    /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $fileReviews;
@@ -44,10 +36,15 @@ class ObjectInQuestion
     private $resource;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Report::class, inversedBy="objectInQuestions")
+     * @ORM\ManyToOne(targetEntity=Model::class, inversedBy="objectInQuestions")
      * @ORM\JoinColumn(nullable=false)
      */
-    private $report;
+    private $model;
+
+    public function __construct()
+    {
+        $this->models = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -62,30 +59,6 @@ class ObjectInQuestion
     public function setLink(string $link): self
     {
         $this->link = $link;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getExpiresAt(): ?\DateTimeInterface
-    {
-        return $this->expiresAt;
-    }
-
-    public function setExpiresAt(\DateTimeInterface $expiresAt): self
-    {
-        $this->expiresAt = $expiresAt;
 
         return $this;
     }
@@ -114,14 +87,14 @@ class ObjectInQuestion
         return $this;
     }
 
-    public function getReport(): ?Report
+    public function getModel(): ?Model
     {
-        return $this->report;
+        return $this->model;
     }
 
-    public function setReport(?Report $report): self
+    public function setModel(?Model $model): self
     {
-        $this->report = $report;
+        $this->model = $model;
 
         return $this;
     }

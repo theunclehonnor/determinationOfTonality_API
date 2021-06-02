@@ -25,7 +25,7 @@ class Report
     private $createdAt;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $file;
 
@@ -36,14 +36,10 @@ class Report
     private $userApi;
 
     /**
-     * @ORM\OneToMany(targetEntity=ObjectInQuestion::class, mappedBy="report")
+     * @ORM\OneToOne(targetEntity=ObjectInQuestion::class, cascade={"persist", "remove"})
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $objectInQuestions;
-
-    public function __construct()
-    {
-        $this->objectInQuestions = new ArrayCollection();
-    }
+    private $objectInQuestion;
 
 
     public function getId(): ?int
@@ -87,32 +83,14 @@ class Report
         return $this;
     }
 
-    /**
-     * @return Collection|ObjectInQuestion[]
-     */
-    public function getObjectInQuestions(): Collection
+    public function getObjectInQuestion(): ?ObjectInQuestion
     {
-        return $this->objectInQuestions;
+        return $this->objectInQuestion;
     }
 
-    public function addObjectInQuestion(ObjectInQuestion $objectInQuestion): self
+    public function setObjectInQuestion(ObjectInQuestion $objectInQuestion): self
     {
-        if (!$this->objectInQuestions->contains($objectInQuestion)) {
-            $this->objectInQuestions[] = $objectInQuestion;
-            $objectInQuestion->setReport($this);
-        }
-
-        return $this;
-    }
-
-    public function removeObjectInQuestion(ObjectInQuestion $objectInQuestion): self
-    {
-        if ($this->objectInQuestions->removeElement($objectInQuestion)) {
-            // set the owning side to null (unless already changed)
-            if ($objectInQuestion->getReport() === $this) {
-                $objectInQuestion->setReport(null);
-            }
-        }
+        $this->objectInQuestion = $objectInQuestion;
 
         return $this;
     }

@@ -98,16 +98,6 @@ class UserDTO
     /**
      * @OA\Property(
      *     type="string",
-     *     title="CreatedAt",
-     *     description="CreatedAt"
-     * )
-     * @Serializer\Type("string")
-     */
-    private $createdAt;
-
-    /**
-     * @OA\Property(
-     *     type="string",
      *     title="NameCompany",
      *     description="Photo"
      * )
@@ -184,16 +174,6 @@ class UserDTO
     public function setPatronymic($patronymic): void
     {
         $this->patronymic = $patronymic;
-    }
-
-    public function getCreatedAt()
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt($createdAt): void
-    {
-        $this->createdAt = $createdAt;
     }
 
     public function getNameCompany()

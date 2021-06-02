@@ -117,11 +117,6 @@ class AuthController extends AbstractController
      *                  example="Артурович"
      *              ),
      *              @OA\Property(
-     *                  property="createdAt",
-     *                  type="string",
-     *                  example="2021-05-10 10:15:13"
-     *              ),
-     *              @OA\Property(
      *                  property="nameCompany",
      *                  type="string",
      *                  example="М.видео"

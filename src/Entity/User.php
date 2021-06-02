@@ -54,11 +54,6 @@ class User implements UserInterface
      */
     private $patronymic;
 
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $createdAt;
-
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
@@ -192,18 +187,6 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
 
     public function getNameCompany(): ?string
     {
@@ -256,7 +239,6 @@ class User implements UserInterface
         $user->setSurname($userDTO->getSurname());
         $user->setName($userDTO->getName());
         $user->setPatronymic($userDTO->getPatronymic());
-        $user->setCreatedAt(new DateTime($userDTO->getCreatedAt()));
         $user->setNameCompany($userDTO->getNameCompany());
 
         return $user;
