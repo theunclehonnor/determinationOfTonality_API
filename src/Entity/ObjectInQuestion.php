@@ -30,16 +30,16 @@ class ObjectInQuestion
     private $fileReviews;
 
     /**
-     * @ORM\OneToOne(targetEntity=Resource::class, cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $resource;
-
-    /**
      * @ORM\ManyToOne(targetEntity=Model::class, inversedBy="objectInQuestions")
      * @ORM\JoinColumn(nullable=false)
      */
     private $model;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Resource::class)
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $resource;
 
     public function __construct()
     {
@@ -75,18 +75,6 @@ class ObjectInQuestion
         return $this;
     }
 
-    public function getResource(): ?Resource
-    {
-        return $this->resource;
-    }
-
-    public function setResource(Resource $resource): self
-    {
-        $this->resource = $resource;
-
-        return $this;
-    }
-
     public function getModel(): ?Model
     {
         return $this->model;
@@ -95,6 +83,18 @@ class ObjectInQuestion
     public function setModel(?Model $model): self
     {
         $this->model = $model;
+
+        return $this;
+    }
+
+    public function getResource(): ?Resource
+    {
+        return $this->resource;
+    }
+
+    public function setResource(?Resource $resource): self
+    {
+        $this->resource = $resource;
 
         return $this;
     }

@@ -36,6 +36,16 @@ class Review
      */
     private $date;
 
+    /**
+     * @Serializer\Type("string")
+     */
+    private $review;
+
+    /**
+     * @Serializer\Type("integer")
+     */
+    private $sentiment;
+
     public function getPluses()
     {
         return $this->pluses;
@@ -94,5 +104,25 @@ class Review
     public function setAuthor(?string $author): void
     {
         $this->author = $author;
+    }
+
+    public function getReview()
+    {
+        return $this->review;
+    }
+
+    public function setReview(?string $review): void
+    {
+        $this->review = $review;
+    }
+
+    public function getSentiment()
+    {
+        return $this->sentiment;
+    }
+
+    public function setSentiment(?int $sentiment): void
+    {
+        $this->sentiment = $sentiment;
     }
 }

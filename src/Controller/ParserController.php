@@ -7,11 +7,13 @@ use App\Entity\ObjectInQuestion;
 use App\Entity\Report;
 use App\Entity\Resource;
 use App\Entity\User;
+use App\Exception\PythonServiceMLUnavaibleException;
 use App\Parser\Parser;
 use App\Parser\Review;
 use App\Repository\ModelRepository;
 use App\Repository\ResourceRepository;
 use App\Repository\UserRepository;
+use App\Service\PythonServiceML;
 use OpenApi\Annotations as OA;
 use PhpQuery\PhpQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +27,13 @@ use Symfony\Component\Serializer\SerializerInterface;
  */
 class ParserController extends AbstractController
 {
+    private $pythonServiceMl;
+
+    public function __construct(PythonServiceML $pythonServiceML)
+    {
+        $this->pythonServiceMl = $pythonServiceML;
+    }
+
     /**
      * @Route("/mvideo", name="api_parser_mvideo", methods={"POST"})
      * @OA\Post (
@@ -136,11 +145,24 @@ class ParserController extends AbstractController
      *     )
      *  )
      */
-    public function mvideo(Request $request, SerializerInterface $serializer, UserRepository $userRepository): Response
-    {
+    public function mvideo(
+        Request $request,
+        SerializerInterface $serializer,
+        UserRepository $userRepository,
+        ModelRepository $modelRepository
+    ): Response {
         try {
             // ссылка на продукт
             $url = json_decode($request->getContent(), true)['url'];
+            $modelDto = json_decode($request->getContent(), true)['model'];
+            if (!$url) {
+                throw new \Exception('Некорректная ссылка', Response::HTTP_BAD_REQUEST);
+            }
+            if (!$modelDto) {
+                throw new \Exception('Некорректная модель', Response::HTTP_BAD_REQUEST);
+            }
+            // Проверяем модель на всякий случай и получаем её из БД
+            $model = $this->checkModel($modelDto, $modelRepository);
             // Проверяем что ссылка действительно на м-видео
             $checkUrl = explode('/', $url);
             if ('www.mvideo.ru' !== $checkUrl[2] || 'products' !== $checkUrl[3]) {
@@ -238,17 +260,31 @@ class ParserController extends AbstractController
             }
             // сериализуем в json
             $data = $serializer->serialize($reviews, 'json');
+            //_____________________Запрос в серивис с определением тональности; на выходе json_______________________
+            $data = $this->pythonServiceMl->predictTonality(
+                $data,
+                $model->getPath(),
+                $model->getDataSet(),
+                $model->getClassificator()
+            );
 
             // найдем id юзера
             $user = $this->getUser();
             $user = $userRepository->findOneBy(['email' => $user->getUsername()]);
             // сохраняем в файл
-            $this->saveJson('mvideo_'.$idProduct, $user->getId(), $data);
+            $pathFileReviews = $this->saveJson('mvideo_'.$idProduct, $user->getId(), $data);
 
+            //____________________________Создание рассматриваемого объекта, отчета_____________________
+            $this->createOtherEntity('М.видео', $url, $model, $pathFileReviews);
             // Код ответа 201
             $dataResponse = [
                 'code' => Response::HTTP_CREATED,
                 'success' => true,
+            ];
+        } catch (PythonServiceMLUnavaibleException $e) {
+            $dataResponse = [
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
             ];
         } catch (\Exception $e) {
             // ошибка
@@ -294,12 +330,12 @@ class ParserController extends AbstractController
      *                  @OA\Property(
      *                      property="dataSet",
      *                      type="string",
-     *                      example="womenShop"
+     *                      example="twitter"
      *                  ),
      *                  @OA\Property(
      *                      property="classificator",
      *                      type="string",
-     *                      example="MultinomialNB"
+     *                      example="RandomForest"
      *                  ),
      *              ),
      *          )
@@ -513,6 +549,13 @@ class ParserController extends AbstractController
             // сериализуем в json
             $data = $serializer->serialize($reviews, 'json');
 
+            //_____________________Запрос в серивис с определением тональности; на выходе json_______________________
+            $data = $this->pythonServiceMl->predictTonality(
+                $data,
+                $model->getPath(),
+                $model->getDataSet(),
+                $model->getClassificator()
+            );
             // id доктора
             $idDoctor = $checkUrl[5];
             // найдем id юзера
@@ -521,15 +564,19 @@ class ParserController extends AbstractController
             // сохраняем в файл
             $pathFileReviews = $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $data);
 
-            // Заполнение оставшихся сущностей
-            $this->createOtherEntity('М.видео', $url, $model, $pathFileReviews);
+            //____________________________Создание рассматриваемого объекта, отчета_____________________
+            $this->createOtherEntity('Продокторов | врачи', $url, $model, $pathFileReviews);
             // Код ответа 201
             $dataResponse = [
                 'code' => Response::HTTP_CREATED,
                 'success' => true,
             ];
+        } catch (PythonServiceMLUnavaibleException $e) {
+            $dataResponse = [
+                    'code' => $e->getCode(),
+                    'message' => $e->getMessage(),
+                ];
         } catch (\Exception $e) {
-            // ошибка
             $dataResponse = [
                 'code' => $e->getCode(),
                 'message' => $e->getMessage(),
@@ -566,7 +613,9 @@ class ParserController extends AbstractController
 
     public function saveJson($idProduct, $idUser, $dataJson): string
     {
-        $path = './data_users/'.$idUser.'/json/'.$idProduct.'_'.date('Y-m-d_H-i-s').'.json';
+        $path = './data_users/'.$idUser.'/json/'.$idProduct.'_'.
+            (new \DateTime())->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d_H-i-s').
+            '.json';
         $fp = fopen($path, 'w');
         fwrite($fp, $dataJson);
         fclose($fp);
@@ -648,7 +697,7 @@ class ParserController extends AbstractController
 
             $entityManager->flush();
         } catch (\Exception $e) {
-            throw new \Exception('Непредвиденная ошибка: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            throw new \Exception('Непредвиденная ошибка: '.$e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
