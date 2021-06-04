@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Parser;
+namespace App\Model;
 
 use JMS\Serializer\Annotation as Serializer;
 
-class Review
+class ReviewDTO
 {
     /**
      * @Serializer\Type("string")

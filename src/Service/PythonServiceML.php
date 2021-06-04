@@ -40,7 +40,6 @@ class PythonServiceML
             throw new PythonServiceMLUnavaibleException($data['message'], 500);
         }
         curl_close($query);
-
-        return $response;
+        return $this->serializer->deserialize($response, 'array<App\Model\ReviewDTO>', 'json');
     }
 }

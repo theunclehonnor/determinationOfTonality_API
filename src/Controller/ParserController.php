@@ -8,10 +8,11 @@ use App\Entity\Report;
 use App\Entity\Resource;
 use App\Entity\User;
 use App\Exception\PythonServiceMLUnavaibleException;
+use App\Model\ItemDTO;
+use App\Model\ModelDTO;
+use App\Model\ReviewDTO;
 use App\Parser\Parser;
-use App\Parser\Review;
 use App\Repository\ModelRepository;
-use App\Repository\ResourceRepository;
 use App\Repository\UserRepository;
 use App\Service\PythonServiceML;
 use OpenApi\Annotations as OA;
@@ -75,7 +76,7 @@ class ParserController extends AbstractController
      *     ),
      *     @OA\Response(
      *          response="201",
-     *          description="Отзывы успешно получены",
+     *          description="Операция успешно проведена",
      *          @OA\MediaType(
      *             mediaType="application/json",
      *             @OA\Schema(
@@ -185,11 +186,9 @@ class ParserController extends AbstractController
             $mainDocument = PhpQuery::newDocument('<meta charset="utf-8">'.$html);
             // Находим заголовок h1 с названием продукта
             $entry = $mainDocument->find('h1');
-            $mvideoData['h1'] = PhpQuery::pq($entry)->text();
-            $string = htmlentities($mvideoData['h1'], null, 'utf-8');
-            $mvideoData['h1'] = str_replace(' ', '', $string);
-            $mvideoData['h1'] = html_entity_decode($mvideoData['h1']);
-            if ('Cтраница не найдена.' === $mvideoData['h1']) {
+            $mvideoData['title'] = PhpQuery::pq($entry)->text();
+            $mvideoData['title'] = preg_replace('/\s+/', ' ', $mvideoData['title']);
+            if ('Cтраница не найдена.' === $mvideoData['title']) {
                 throw new \Exception('Страница с данным продуктом не найдена', Response::HTTP_BAD_REQUEST);
             }
             // Выгрузим количество отзывов
@@ -202,6 +201,8 @@ class ParserController extends AbstractController
             // Получим ID товара из ссылки
             $idProduct = explode('-', $url);
             $idProduct = $idProduct[count($idProduct) - 1];
+            // Выгрузим url картинки
+            $mvideoData['image'] = 'https://img.mvideo.ru/Big/'.$idProduct.'bb.jpg';
             // Ссылка на страницу с отзывами
             $urlReviews = 'https://www.mvideo.ru/sitebuilder/blocks/browse/product-detail/tabs/product-reviews.jsp?'.
                 'productId='.$idProduct.'&howMany='.$countReviews.'&sortBy=dateDesc&page=1';
@@ -225,11 +226,11 @@ class ParserController extends AbstractController
             // все отзывы со страницы
             $allReviews = $reviewsDocument->find('.review-ext-wrapper');
             // класс содержащий все отзывы
-            /** @var Review[] $reviews */
+            /** @var ReviewDTO[] $reviews */
             $reviews = [];
             // цикл по отзывам
             foreach ($allReviews as $reviewSelectors) {
-                $review = new Review();
+                $review = new ReviewDTO();
                 // автор
                 $author = PhpQuery::pq($reviewSelectors)->find('span.review-ext-item-author-name');
                 $review->setAuthor($author ? $author->text() : null);
@@ -267,12 +268,29 @@ class ParserController extends AbstractController
                 $model->getDataSet(),
                 $model->getClassificator()
             );
+            // заполняем всей имеющейся информацией Итем с продуктом
+            $item = new ItemDTO();
+            $item->setTitle($mvideoData['title']);
+            $item->setCountReviews($countReviews);
+            $item->setReviews($data);
+            $item->setImage($mvideoData['image']);
+            $item->setAccuracy($this->accuracyOfTonalityToRating($item, 'М.видео'));
+
+            $modelDto = new ModelDTO();
+            $modelDto->setName($model->getName());
+            $modelDto->setDataSet($model->getDataSet());
+            $modelDto->setClassificator($model->getClassificator());
+            $modelDto->setDescription($model->getDescription());
+            $item->setModel($modelDto);
+            $item->setTonality($this->setTonalityItem($item));
+
+            $itemJson = $serializer->serialize($item, 'json');
 
             // найдем id юзера
             $user = $this->getUser();
             $user = $userRepository->findOneBy(['email' => $user->getUsername()]);
             // сохраняем в файл
-            $pathFileReviews = $this->saveJson('mvideo_'.$idProduct, $user->getId(), $data);
+            $pathFileReviews = $this->saveJson('mvideo_'.$idProduct, $user->getId(), $itemJson);
 
             //____________________________Создание рассматриваемого объекта, отчета_____________________
             $this->createOtherEntity('М.видео', $url, $model, $pathFileReviews);
@@ -325,7 +343,7 @@ class ParserController extends AbstractController
      *                  @OA\Property(
      *                      property="name",
      *                      type="string",
-     *                      example="BagOfWords"
+     *                      example="Word2Vec"
      *                  ),
      *                  @OA\Property(
      *                      property="dataSet",
@@ -416,8 +434,7 @@ class ParserController extends AbstractController
         Request $request,
         SerializerInterface $serializer,
         UserRepository $userRepository,
-        ModelRepository $modelRepository,
-        ResourceRepository $resourceRepository
+        ModelRepository $modelRepository
     ): Response {
         try {
             // ссылка на врача с продокторов
@@ -458,10 +475,14 @@ class ParserController extends AbstractController
             if ('' === $entry->text()) {
                 $entry = $h1;
             }
-            $mvideoData['h1'] = PhpQuery::pq($entry)->text();
-            if ('На этой странице ничего нет' === $mvideoData['h1']) {
+            $prodoctorovData['title'] = PhpQuery::pq($entry)->text();
+            if ('На этой странице ничего нет' === $prodoctorovData['title']) {
                 throw new \Exception('Страница с введеными данным не найдена', Response::HTTP_BAD_REQUEST);
             }
+            // Описание врача
+            $prodoctorovData['description'] = $mainDocument->find('p.b-doctor-intro__summary')->text();
+            // Картинка врача
+            $prodoctorovData['image'] = $mainDocument->find('img[itemprop=image]')->text();
             //_______________________Выгружаем отзывы________________________________
             // все отзывы со страницы
             $allReviews = $mainDocument->find('div[itemprop=review]');
@@ -469,11 +490,11 @@ class ParserController extends AbstractController
                 throw new \Exception('На данной странице нет отзывов', Response::HTTP_NOT_FOUND);
             }
             // класс содержащий все отзывы
-            /** @var Review[] $reviews */
+            /** @var ReviewDTO[] $reviews */
             $reviews = [];
             // цикл по отзывам
             foreach ($allReviews as $reviewSelectors) {
-                $review = new Review();
+                $review = new ReviewDTO();
                 // дата
                 $date = PhpQuery::pq($reviewSelectors)->find('div[itemprop=datePublished]');
                 $review->setDate($date ? $date->attr('content') : null);
@@ -556,13 +577,32 @@ class ParserController extends AbstractController
                 $model->getDataSet(),
                 $model->getClassificator()
             );
+            // заполняем всей имеющейся информацией Итем с продуктом
+            $item = new ItemDTO();
+            $item->setTitle($prodoctorovData['title']);
+            $item->setCountReviews(count($reviews));
+            $item->setReviews($data);
+            $item->setDescription($prodoctorovData['description']);
+            $item->setImage($prodoctorovData['image']);
+            $item->setAccuracy($this->accuracyOfTonalityToRating($item, 'Продокторов | врачи'));
+
+            $modelDto = new ModelDTO();
+            $modelDto->setName($model->getName());
+            $modelDto->setDataSet($model->getDataSet());
+            $modelDto->setClassificator($model->getClassificator());
+            $modelDto->setDescription($model->getDescription());
+            $item->setModel($modelDto);
+            $item->setTonality($this->setTonalityItem($item));
+
+            $itemJson = $serializer->serialize($item, 'json');
+
             // id доктора
             $idDoctor = $checkUrl[5];
             // найдем id юзера
             $user = $this->getUser();
             $user = $userRepository->findOneBy(['email' => $user->getUsername()]);
             // сохраняем в файл
-            $pathFileReviews = $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $data);
+            $pathFileReviews = $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $itemJson);
 
             //____________________________Создание рассматриваемого объекта, отчета_____________________
             $this->createOtherEntity('Продокторов | врачи', $url, $model, $pathFileReviews);
@@ -588,6 +628,67 @@ class ParserController extends AbstractController
         $response->headers->add(['Content-Type' => 'application/json']);
 
         return $response;
+    }
+
+    public function accuracyOfTonalityToRating(ItemDTO $item, $nameParser)
+    {
+        if ('М.видео' === $nameParser) {
+            // считаем рейтинг и кол-во отзывов, всё что больше или равно оценке 2.5 - позитинвые, иначе негативные
+            // (0 до 5) оценка
+            // сравнили совпадения рейтинга и тональности
+            $countTrue = 0;
+            /** @var ReviewDTO $review */
+            foreach ($item->getReviews() as $review) {
+                if (1 === $review->getSentiment() && $review->getRating() >= 2.5) {
+                    ++$countTrue;
+                } elseif (0 === $review->getSentiment() && $review->getRating() < 2.5) {
+                    ++$countTrue;
+                } elseif (null === $review->getSentiment()) {
+                    ++$countTrue;
+                }
+            }
+        } elseif ('Продокторов | врачи' === $nameParser) {
+            // считаем рейтинг и кол-во отзывов, всё что больше или равно оценке 0 - позитинвые, иначе негативные
+            // (-2 до 2) оценка
+            // сравнили совпадения рейтинга и тональности
+            $countTrue = 0;
+            /** @var ReviewDTO $review */
+            foreach ($item->getReviews() as $review) {
+                if (1 === $review->getSentiment() && $review->getRating() >= 0) {
+                    ++$countTrue;
+                } elseif (0 === $review->getSentiment() && $review->getRating() < 0) {
+                    ++$countTrue;
+                } elseif (null === $review->getSentiment()) {
+                    ++$countTrue;
+                }
+            }
+        }
+
+        // считаем точность : отношение совпавших ко всем отзывом умноженное на 100 процентов
+        return round($countTrue / $item->getCountReviews() * 100, 2);
+    }
+
+    public function setTonalityItem(ItemDTO $item)
+    {
+        $pluses = 0;
+        $minuses = 0;
+        foreach ($item->getReviews() as $review) {
+            if (1 === $review->getSentiment()) {
+                ++$pluses;
+            } elseif (0 === $review->getSentiment()) {
+                ++$minuses;
+            }
+        }
+
+        if ($pluses > $minuses) {
+            return 'Положительные';
+        }
+
+        if ($minuses < $pluses) {
+            return 'Отрицательные';
+        }
+
+        return 'Нейтральные';
     }
 
     public function checkModel($modelDto, ModelRepository $modelRepository): Model

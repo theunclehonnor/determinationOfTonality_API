@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Отчет{% endblock %}
+
+{% block body %}
+    <h1 style="font-size: 25px; text-align: center">Отчет о тональности текстовых отзывов</h1>
+    <div>
+        <img src="{{ item.image }}" alt="{{ item.title }}" style="float: left; height: 300px; width: auto;">
+        <div style="float: right">
+            <h4>Информация об объекте рассмотрения:</h4>
+            <p style="text-align: left">{{ item.title }}</p>
+            <h4>Информация об используемой модели:</h4>
+            <p style="text-align: left">Название метода: {{ item.model.name }}</p>
+            <p style="text-align: left">Используемые данные для обучения: {{ item.model.dataSet }}</p>
+            <p style="text-align: left">Классификатор: {{ item.model.classificator }}</p>
+            {% if item.model.description %}
+                <p style="text-align: left">Описание: {{ item.model.description }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <h4 style="text-align: center">Отзывы</h4>
+    {% for review in item.reviews %}
+        <div>
+
+        </div>
+    {% endfor %}
+{% endblock %}
