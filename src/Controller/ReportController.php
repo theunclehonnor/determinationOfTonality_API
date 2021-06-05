@@ -156,7 +156,7 @@ class ReportController extends AbstractController
 
             // ошибка
             $dataResponse = [
-                'code' => Response::HTTP_OK,
+                'code' => Response::HTTP_CREATED,
                 'success' => true,
             ];
         } catch (\Exception $e) {

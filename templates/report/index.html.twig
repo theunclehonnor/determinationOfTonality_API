@@ -28,7 +28,7 @@
 
     <h3 style="text-align: center">Отзывы</h3>
     {% for review in item.reviews %}
-        {% if review.sentiment == 1 %}
+        {% if review.sentiment matches '/^[\\d\\.]+$/' and review.sentiment == 1  %}
             <div style="margin-bottom: 20px; padding: 25px; border-radius: 15px; background-color: rgba(59,218,0, 0.5)">
                 {% if review.author %}
                     <p style="font-size: 12px"><strong>Автор:</strong> {{ review.author }}</p>
@@ -49,7 +49,7 @@
                     <p style="font-size: 12px"><strong>Дата:</strong> {{ review.date }}</p>
                 {% endif %}
             </div>
-        {% elseif review.sentiment == 0 %}
+        {% elseif review.sentiment matches '/^[\\d\\.]+$/' and  review.sentiment == 0%}
             <div style="margin-bottom: 20px; padding: 25px; border-radius: 15px; background-color: rgba(255,7,0, 0.5)">
                 {% if review.author %}
                     <p style="font-size: 12px"><strong>Автор:</strong> {{ review.author }}</p>
