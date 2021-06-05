@@ -4,12 +4,12 @@
 
 {% block body %}
     <h1 style="font-size: 25px; text-align: center">Отчет о тональности текстовых отзывов</h1>
-    <div>
-        <img src="{{ item.image }}" alt="{{ item.title }}" style="float: left; height: 300px; width: auto;">
+    <div style="height: 300px;">
+        <img src="{{ item.image }}" alt="{{ item.title }}" style="float: left; height: 290px; width: auto;">
         <div style="float: right">
-            <h4>Информация об объекте рассмотрения:</h4>
+            <h3>Информация об объекте рассмотрения:</h3>
             <p style="text-align: left">{{ item.title }}</p>
-            <h4>Информация об используемой модели:</h4>
+            <h3>Информация об используемой модели:</h3>
             <p style="text-align: left">Название метода: {{ item.model.name }}</p>
             <p style="text-align: left">Используемые данные для обучения: {{ item.model.dataSet }}</p>
             <p style="text-align: left">Классификатор: {{ item.model.classificator }}</p>
@@ -18,10 +18,79 @@
             {% endif %}
         </div>
     </div>
-    <h4 style="text-align: center">Отзывы</h4>
-    {% for review in item.reviews %}
-        <div>
 
-        </div>
+    <h3 style="text-align: center">Дополнительная информация:</h3>
+    <p style="text-align: left">
+        Тональность отзывов совпала с рейтингом в <strong>{{ item.accuracy }}%</strong> случаях
+    </p>
+    <p style="text-align: left">В целом отзывы можно отметить как <strong>{{ item.tonality }}</strong></p>
+    <p style="text-align: left">Найдено отзывов: <strong>{{ item.countReviews }}</strong></p>
+
+    <h3 style="text-align: center">Отзывы</h3>
+    {% for review in item.reviews %}
+        {% if review.sentiment == 1 %}
+            <div style="margin-bottom: 20px; padding: 25px; border-radius: 15px; background-color: rgba(59,218,0, 0.5)">
+                {% if review.author %}
+                    <p style="font-size: 12px"><strong>Автор:</strong> {{ review.author }}</p>
+                {% endif %}
+                {% if review.rating %}
+                    <p style="font-size: 12px"><strong>Рейтинг:</strong> {{ review.rating }}</p>
+                {% endif %}
+                {% if review.pluses %}
+                    <p style="font-size: 12px"><strong>Плюсы:</strong> {{ review.pluses }}</p>
+                {% endif %}
+                {% if review.minuses %}
+                    <p style="font-size: 12px"><strong>Минусы:</strong> {{ review.minuses }}</p>
+                {% endif %}
+                {% if review.description %}
+                    <p style="font-size: 12px"><strong>Комментарий:</strong> {{ review.description }}</p>
+                {% endif %}
+                {% if review.date %}
+                    <p style="font-size: 12px"><strong>Дата:</strong> {{ review.date }}</p>
+                {% endif %}
+            </div>
+        {% elseif review.sentiment == 0 %}
+            <div style="margin-bottom: 20px; padding: 25px; border-radius: 15px; background-color: rgba(255,7,0, 0.5)">
+                {% if review.author %}
+                    <p style="font-size: 12px"><strong>Автор:</strong> {{ review.author }}</p>
+                {% endif %}
+                {% if review.rating %}
+                    <p style="font-size: 12px"><strong>Рейтинг:</strong> {{ review.rating }}</p>
+                {% endif %}
+                {% if review.pluses %}
+                    <p style="font-size: 12px"><strong>Плюсы:</strong> {{ review.pluses }}</p>
+                {% endif %}
+                {% if review.minuses %}
+                    <p style="font-size: 12px"><strong>Минусы:</strong> {{ review.minuses }}</p>
+                {% endif %}
+                {% if review.description %}
+                    <p style="font-size: 12px"><strong>Комментарий:</strong> {{ review.description }}</p>
+                {% endif %}
+                {% if review.date %}
+                    <p style="font-size: 12px"><strong>Дата:</strong> {{ review.date }}</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <div style="margin-bottom: 20px; padding: 25px; border-radius: 15px; background-color: rgba(156,156,157, 0.5)">
+                {% if review.author %}
+                    <p style="font-size: 12px"><strong>Автор:</strong> {{ review.author }}</p>
+                {% endif %}
+                {% if review.rating %}
+                    <p style="font-size: 12px"><strong>Рейтинг:</strong> {{ review.rating }}</p>
+                {% endif %}
+                {% if review.pluses %}
+                    <p style="font-size: 12px"><strong>Плюсы:</strong> {{ review.pluses }}</p>
+                {% endif %}
+                {% if review.minuses %}
+                    <p style="font-size: 12px"><strong>Минусы:</strong> {{ review.minuses }}</p>
+                {% endif %}
+                {% if review.description %}
+                    <p style="font-size: 12px"><strong>Комментарий:</strong> {{ review.description }}</p>
+                {% endif %}
+                {% if review.date %}
+                    <p style="font-size: 12px"><strong>Дата:</strong> {{ review.date }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
     {% endfor %}
 {% endblock %}

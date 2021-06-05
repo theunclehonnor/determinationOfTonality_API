@@ -6,6 +6,7 @@ use App\Entity\Report;
 use App\Model\ItemDTO;
 use App\Repository\ObjectInQuestionRepository;
 use App\Repository\ReportRepository;
+use App\Repository\ResourceRepository;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use OpenApi\Annotations as OA;
@@ -96,7 +97,8 @@ class ReportController extends AbstractController
         Request $request,
         SerializerInterface $serializer,
         ReportRepository $reportRepository,
-        ObjectInQuestionRepository $objectInQuestionRepository
+        ObjectInQuestionRepository $objectInQuestionRepository,
+        ResourceRepository $resourceRepository
     ) {
         try {
             $pdfOptions = new Options();

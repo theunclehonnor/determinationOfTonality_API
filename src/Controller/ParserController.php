@@ -482,7 +482,7 @@ class ParserController extends AbstractController
             // Описание врача
             $prodoctorovData['description'] = $mainDocument->find('p.b-doctor-intro__summary')->text();
             // Картинка врача
-            $prodoctorovData['image'] = $mainDocument->find('img[itemprop=image]')->text();
+            $prodoctorovData['image'] = $mainDocument->find('img[itemprop=image]')->attr('src');
             //_______________________Выгружаем отзывы________________________________
             // все отзывы со страницы
             $allReviews = $mainDocument->find('div[itemprop=review]');
@@ -583,7 +583,7 @@ class ParserController extends AbstractController
             $item->setCountReviews(count($reviews));
             $item->setReviews($data);
             $item->setDescription($prodoctorovData['description']);
-            $item->setImage($prodoctorovData['image']);
+            $item->setImage('https://prodoctorov.ru'.$prodoctorovData['image']);
             $item->setAccuracy($this->accuracyOfTonalityToRating($item, 'Продокторов | врачи'));
 
             $modelDto = new ModelDTO();
@@ -684,7 +684,7 @@ class ParserController extends AbstractController
             return 'Положительные';
         }
 
-        if ($minuses < $pluses) {
+        if ($pluses < $minuses) {
             return 'Отрицательные';
         }
 
