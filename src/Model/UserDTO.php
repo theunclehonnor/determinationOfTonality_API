@@ -151,7 +151,7 @@ class UserDTO
         return $this->surname;
     }
 
-    public function setSurname($surname): void
+    public function setSurname(?string $surname): void
     {
         $this->surname = $surname;
     }
@@ -161,7 +161,7 @@ class UserDTO
         return $this->name;
     }
 
-    public function setName($name): void
+    public function setName(?string $name): void
     {
         $this->name = $name;
     }
@@ -171,7 +171,7 @@ class UserDTO
         return $this->patronymic;
     }
 
-    public function setPatronymic($patronymic): void
+    public function setPatronymic(?string $patronymic): void
     {
         $this->patronymic = $patronymic;
     }
@@ -181,7 +181,7 @@ class UserDTO
         return $this->nameCompany;
     }
 
-    public function setNameCompany($nameCompany): void
+    public function setNameCompany(?string $nameCompany): void
     {
         $this->nameCompany = $nameCompany;
     }

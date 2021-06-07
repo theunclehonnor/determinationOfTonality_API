@@ -175,37 +175,23 @@ class AuthController extends AbstractController
         JWTTokenManagerInterface $JWTManager,
         RefreshTokenManagerInterface $refreshTokenManager
     ): Response {
-        // Десериализация
-        $userDTO = $serializer->deserialize($request->getContent(), UserDTO::class, 'json');
+        try {
+            // Десериализация
+            $userDTO = $serializer->deserialize($request->getContent(), UserDTO::class, 'json');
 
-        $data = [];
-        $response = new Response();
-        // Проверяем ошибки при валидации
-        $validErrors = $validator->validate($userDTO);
-        if (count($validErrors)) {
-            // Параметры
-            $data = [
-                'code' => Response::HTTP_BAD_REQUEST,
-                'message' => $validErrors,
-            ];
-            // Статус ответа 400
-            $response->setStatusCode(Response::HTTP_BAD_REQUEST);
-            $response->setContent($serializer->serialize($data, 'json'));
-            $response->headers->add(['Content-Type' => 'application/json']);
+            // Проверяем ошибки при валидации
+            $validErrors = $validator->validate($userDTO);
+            if (count($validErrors)) {
+                throw new \Exception($validErrors, Response::HTTP_BAD_REQUEST);
+            }
+            // Существует ли данный пользовательн в системе
+            $entityManager = $this->getDoctrine()->getManager();
+            $userRepository = $entityManager->getRepository(User::class);
+            if ($userRepository->findOneBy(['email' => $userDTO->getEmail()])) {
+                // Статус ответа 403, если пользователь уже существует
+                throw new \Exception('Пользователь с данным email уже существует', Response::HTTP_FORBIDDEN);
+            }
 
-            return $response;
-        }
-        // Существует ли данный пользовательн в системе
-        $entityManager = $this->getDoctrine()->getManager();
-        $userRepository = $entityManager->getRepository(User::class);
-        if ($userRepository->findOneBy(['email' => $userDTO->getEmail()])) {
-            $data = [
-                'code' => Response::HTTP_FORBIDDEN,
-                'message' => 'Пользователь с данным email уже существует',
-            ];
-            // Статус ответа 403, если пользователь уже существует
-            $response->setStatusCode(Response::HTTP_FORBIDDEN);
-        } else {
             // Создаем пользователя
             $user = User::fromDTO($userDTO);
             $user->setPassword($passwordEncoder->encodePassword(
@@ -224,23 +210,35 @@ class AuthController extends AbstractController
 
             // Создадим папку пользователю, в которой он будет хранить комментарии в json
             if (!mkdir($concurrentDirectory = './data_users/'.$user->getId().'/json', 0777, true)
-                && !is_dir($concurrentDirectory)) {
+            && !is_dir($concurrentDirectory)) {
                 throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
             }
             // и отчеты
             if (!mkdir($concurrentDirectory = './data_users/'.$user->getId().'/reports', 0777, true)
-                && !is_dir($concurrentDirectory)) {
+            && !is_dir($concurrentDirectory)) {
                 throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
             }
 
             $data = [
                 // JWT token
+                'username' => $user->getEmail(),
                 'token' => $JWTManager->create($user),
                 'refresh_token' => $refreshToken->getRefreshToken(),
             ];
-            // Устанавливаем статус ответа
-            $response->setStatusCode(Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            $data = [
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ];
+            $response = new Response();
+            $response->setStatusCode($e->getCode());
+            $response->setContent($serializer->serialize($data, 'json'));
+            $response->headers->add(['Content-Type' => 'application/json']);
+
+            return $response;
         }
+        $response = new Response();
+        $response->setStatusCode(Response::HTTP_CREATED);
         $response->setContent($serializer->serialize($data, 'json'));
         $response->headers->add(['Content-Type' => 'application/json']);
 
