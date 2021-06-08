@@ -4,7 +4,7 @@
 
 {% block body %}
     <h1 style="font-size: 25px; text-align: center">Отчет о тональности текстовых отзывов</h1>
-    <div style="height: 300px; margin-bottom: 70px;">
+    <div style="height: 300px; margin-bottom: 100px;">
         <img src="{{ item.image }}" alt="{{ item.title }}" style="float: left; height: 290px; width: auto; margin-top: 40px">
         <div style="float: right; width: 400px;">
             <h3>Информация об объекте рассмотрения:</h3>
@@ -25,6 +25,7 @@
     </p>
     <p style="text-align: left">В целом отзывы можно отметить как <strong>{{ item.tonality }}</strong></p>
     <p style="text-align: left">Найдено отзывов: <strong>{{ item.countReviews }}</strong></p>
+    <p style="text-align: left">Диапазон оценки: <strong>{{ item.itervalRating }}</strong></p>
 
     <h3 style="text-align: center">Отзывы</h3>
     {% for review in item.reviews %}

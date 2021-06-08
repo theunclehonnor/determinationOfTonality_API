@@ -37,6 +37,11 @@ class ItemDTO
     private $accuracy;
 
     /**
+     * @Serializer\Type("string")
+     */
+    private $itervalRating;
+
+    /**
      * @var ModelDTO
      * @Serializer\Type("App\Model\ModelDTO")
      */
@@ -132,5 +137,15 @@ class ItemDTO
     public function setTonality(?string $tonality): void
     {
         $this->tonality = $tonality;
+    }
+
+    public function getItervalRating()
+    {
+        return $this->itervalRating;
+    }
+
+    public function setItervalRating($itervalRating): void
+    {
+        $this->itervalRating = $itervalRating;
     }
 }

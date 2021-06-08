@@ -282,6 +282,7 @@ class ParserController extends AbstractController
             $item->setReviews($data);
             $item->setImage($mvideoData['image']);
             $item->setAccuracy($this->accuracyOfTonalityToRating($item, 'М.видео'));
+            $item->setItervalRating('0 до 5');
 
             $modelDto = new ModelDTO();
             $modelDto->setName($model->getName());
@@ -607,6 +608,7 @@ class ParserController extends AbstractController
             $item->setDescription($prodoctorovData['description']);
             $item->setImage('https://prodoctorov.ru'.$prodoctorovData['image']);
             $item->setAccuracy($this->accuracyOfTonalityToRating($item, 'Продокторов | врачи'));
+            $item->setItervalRating('-2 до 2');
 
             $modelDto = new ModelDTO();
             $modelDto->setName($model->getName());

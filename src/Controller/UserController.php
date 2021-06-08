@@ -231,7 +231,7 @@ class UserController extends AbstractController
         try {
             $user = $userRepository->findOneBy(['email' => $this->getUser()->getUsername()]);
             /** @var Report[] $reports */
-            $reports = $reportRepository->findBy(['userApi' => $user]);
+            $reports = $reportRepository->findBy(['userApi' => $user], ['createdAt' => 'DESC']);
             if (!$reports) {
                 throw new \Exception('Отчет не найден', Response::HTTP_NOT_FOUND);
             }
