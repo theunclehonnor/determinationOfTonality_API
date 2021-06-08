@@ -233,22 +233,22 @@ class UserController extends AbstractController
             /** @var Report[] $reports */
             $reports = $reportRepository->findBy(['userApi' => $user]);
             if (!$reports) {
-                throw new \Exception('Отчет не найден');
+                throw new \Exception('Отчет не найден', Response::HTTP_NOT_FOUND);
             }
             $reportsDto = [];
             foreach ($reports as $report) {
                 $objectInQuestion = $report->getObjectInQuestion();
                 if (!$objectInQuestion) {
-                    throw new \Exception('Рассматриваемый объект не найден');
+                    throw new \Exception('Рассматриваемый объект не найден', Response::HTTP_NOT_FOUND);
                 }
                 $model = $objectInQuestion->getModel();
                 if (!$model) {
-                    throw new \Exception('Модель не найдена');
+                    throw new \Exception('Модель не найдена', Response::HTTP_NOT_FOUND);
                 }
                 /** @var Resource $resource */
                 $resource = $objectInQuestion->getResource();
                 if (!$resource) {
-                    throw new \Exception('Веб-ресурс не найден');
+                    throw new \Exception('Веб-ресурс не найден', Response::HTTP_NOT_FOUND);
                 }
                 // modelDto
                 $modelDto = new ModelDTO();
