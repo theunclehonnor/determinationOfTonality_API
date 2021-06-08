@@ -40,6 +40,16 @@ class ObjectInQuestion
      */
     private $resource;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $name;
+
+    /**
+     * @ORM\Column(type="string", length=500, nullable=true)
+     */
+    private $image;
+
     public function __construct()
     {
         $this->models = new ArrayCollection();
@@ -94,6 +104,30 @@ class ObjectInQuestion
     public function setResource(?Resource $resource): self
     {
         $this->resource = $resource;
+
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): self
+    {
+        $this->image = $image;
 
         return $this;
     }

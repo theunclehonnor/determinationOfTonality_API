@@ -261,6 +261,8 @@ class UserController extends AbstractController
                 $resourceDto->setLink($resource->getLink());
                 // objectInQuestion
                 $objectInQuestionDto = new ObjectInQuestionDTO();
+                $objectInQuestionDto->setName($objectInQuestion->getName());
+                $objectInQuestionDto->setImage($objectInQuestion->getImage());
                 $objectInQuestionDto->setLink($objectInQuestion->getLink());
                 $objectInQuestionDto->setModel($modelDto);
                 $objectInQuestionDto->setResource($resourceDto);

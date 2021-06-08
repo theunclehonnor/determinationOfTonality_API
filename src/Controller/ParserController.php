@@ -293,7 +293,14 @@ class ParserController extends AbstractController
             $pathFileReviews = $this->saveJson('mvideo_'.$idProduct, $user->getId(), $itemJson);
 
             //____________________________Создание рассматриваемого объекта, отчета_____________________
-            $this->createOtherEntity('М.видео', $url, $model, $pathFileReviews);
+            $this->createOtherEntity(
+                'М.видео',
+                $url,
+                $model,
+                $pathFileReviews,
+                $mvideoData['title'],
+                $mvideoData['image']
+            );
             // Код ответа 201
             $dataResponse = [
                 'code' => Response::HTTP_CREATED,
@@ -605,7 +612,14 @@ class ParserController extends AbstractController
             $pathFileReviews = $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $itemJson);
 
             //____________________________Создание рассматриваемого объекта, отчета_____________________
-            $this->createOtherEntity('Продокторов | врачи', $url, $model, $pathFileReviews);
+            $this->createOtherEntity(
+                'Продокторов | врачи',
+                $url,
+                $model,
+                $pathFileReviews,
+                $item->getTitle(),
+                $item->getImage()
+            );
             // Код ответа 201
             $dataResponse = [
                 'code' => Response::HTTP_CREATED,
@@ -761,7 +775,9 @@ class ParserController extends AbstractController
         $nameResource,
         $url,
         $model,
-        $pathFileReviews
+        $pathFileReviews,
+        $title,
+        $imgae
     ) {
         try {
             $entityManager = $this->getDoctrine()->getManager();
@@ -778,6 +794,8 @@ class ParserController extends AbstractController
             $objectInQuestion->setModel($model);
             $objectInQuestion->setFileReviews($pathFileReviews);
             $objectInQuestion->setResource($resource);
+            $objectInQuestion->setName($title);
+            $objectInQuestion->setImage($imgae);
 
             $entityManager->persist($objectInQuestion);
 
