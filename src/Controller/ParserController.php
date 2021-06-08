@@ -13,6 +13,7 @@ use App\Model\ModelDTO;
 use App\Model\ReviewDTO;
 use App\Parser\Parser;
 use App\Repository\ModelRepository;
+use App\Repository\ReportRepository;
 use App\Repository\UserRepository;
 use App\Service\PythonServiceML;
 use OpenApi\Annotations as OA;
@@ -87,8 +88,13 @@ class ParserController extends AbstractController
      *                 ),
      *                 @OA\Property(
      *                     property="success",
-     *                     type="bool",
+     *                     type="boolean",
      *                     example="true"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="id_report",
+     *                     type="integer",
+     *                     example=1
      *                 ),
      *             ),
      *        )
@@ -150,7 +156,8 @@ class ParserController extends AbstractController
         Request $request,
         SerializerInterface $serializer,
         UserRepository $userRepository,
-        ModelRepository $modelRepository
+        ModelRepository $modelRepository,
+        ReportRepository $reportRepository
     ): Response {
         try {
             // ссылка на продукт
@@ -293,7 +300,7 @@ class ParserController extends AbstractController
             $pathFileReviews = $this->saveJson('mvideo_'.$idProduct, $user->getId(), $itemJson);
 
             //____________________________Создание рассматриваемого объекта, отчета_____________________
-            $this->createOtherEntity(
+            $report = $this->createOtherEntity(
                 'М.видео',
                 $url,
                 $model,
@@ -301,10 +308,12 @@ class ParserController extends AbstractController
                 $mvideoData['title'],
                 $mvideoData['image']
             );
+            $report = $reportRepository->find($report);
             // Код ответа 201
             $dataResponse = [
                 'code' => Response::HTTP_CREATED,
                 'success' => true,
+                'id_report' => $report->getId(),
             ];
         } catch (PythonServiceMLUnavaibleException $e) {
             $dataResponse = [
@@ -378,8 +387,13 @@ class ParserController extends AbstractController
      *                 ),
      *                 @OA\Property(
      *                     property="success",
-     *                     type="bool",
+     *                     type="boolean",
      *                     example="true"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="id_report",
+     *                     type="integer",
+     *                     example=1
      *                 ),
      *             ),
      *        )
@@ -441,7 +455,8 @@ class ParserController extends AbstractController
         Request $request,
         SerializerInterface $serializer,
         UserRepository $userRepository,
-        ModelRepository $modelRepository
+        ModelRepository $modelRepository,
+        ReportRepository $reportRepository
     ): Response {
         try {
             // ссылка на врача с продокторов
@@ -612,7 +627,7 @@ class ParserController extends AbstractController
             $pathFileReviews = $this->saveJson('prodoctorov_'.$idDoctor, $user->getId(), $itemJson);
 
             //____________________________Создание рассматриваемого объекта, отчета_____________________
-            $this->createOtherEntity(
+            $report = $this->createOtherEntity(
                 'Продокторов | врачи',
                 $url,
                 $model,
@@ -620,10 +635,12 @@ class ParserController extends AbstractController
                 $item->getTitle(),
                 $item->getImage()
             );
+            $report = $reportRepository->find($report);
             // Код ответа 201
             $dataResponse = [
                 'code' => Response::HTTP_CREATED,
                 'success' => true,
+                'id_report' => $report->getId(),
             ];
         } catch (PythonServiceMLUnavaibleException $e) {
             $dataResponse = [
@@ -778,7 +795,7 @@ class ParserController extends AbstractController
         $pathFileReviews,
         $title,
         $imgae
-    ) {
+    ): Report {
         try {
             $entityManager = $this->getDoctrine()->getManager();
             // Найдём в базе наш Веб-ресурс
@@ -818,5 +835,6 @@ class ParserController extends AbstractController
         } catch (\Exception $e) {
             throw new \Exception('Непредвиденная ошибка: '.$e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+        return $report;
     }
 }

@@ -4,15 +4,15 @@
 
 {% block body %}
     <h1 style="font-size: 25px; text-align: center">Отчет о тональности текстовых отзывов</h1>
-    <div style="height: 300px;">
-        <img src="{{ item.image }}" alt="{{ item.title }}" style="float: left; height: 290px; width: auto;">
-        <div style="float: right">
+    <div style="height: 300px; margin-bottom: 70px;">
+        <img src="{{ item.image }}" alt="{{ item.title }}" style="float: left; height: 290px; width: auto; margin-top: 40px">
+        <div style="float: right; width: 400px;">
             <h3>Информация об объекте рассмотрения:</h3>
-            <p style="text-align: left">{{ item.title }}</p>
+            <p>{{ item.title }}</p>
             <h3>Информация об используемой модели:</h3>
-            <p style="text-align: left">Название метода: {{ item.model.name }}</p>
-            <p style="text-align: left">Используемые данные для обучения: {{ item.model.dataSet }}</p>
-            <p style="text-align: left">Классификатор: {{ item.model.classificator }}</p>
+            <p>Название метода: {{ item.model.name }}</p>
+            <p>Используемые данные для обучения: {{ item.model.dataSet }}</p>
+            <p>Классификатор: {{ item.model.classificator }}</p>
             {% if item.model.description %}
                 <p style="text-align: left">Описание: {{ item.model.description }}</p>
             {% endif %}

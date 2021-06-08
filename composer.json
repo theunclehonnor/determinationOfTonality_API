@@ -8,6 +8,7 @@
         "ext-ctype": "*",
         "ext-curl": "*",
         "ext-iconv": "*",
+        "ext-json": "*",
         "cagartner/phpquery": "^0.9.12",
         "composer/package-versions-deprecated": "1.11.99.1",
         "doctrine/annotations": "^1.0",
@@ -16,6 +17,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.1",
         "doctrine/orm": "^2.8",
         "dompdf/dompdf": "^1.0",
+        "easycorp/easyadmin-bundle": "^3.3",
         "friendsofphp/php-cs-fixer": "^3.0",
         "gesdinet/jwt-refresh-token-bundle": "^0.12.0",
         "h4cc/wkhtmltoimage-amd64": "0.12.x",
@@ -53,8 +55,7 @@
         "symfony/web-link": "5.2.*",
         "symfony/yaml": "5.2.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^2.12|^3.0",
-      "ext-json": "*"
+        "twig/twig": "^2.12|^3.0"
     },
     "require-dev": {
         "symfony/browser-kit": "^5.2",
