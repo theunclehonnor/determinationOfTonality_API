@@ -19,6 +19,18 @@ class ModelRepository extends ServiceEntityRepository
         parent::__construct($registry, Model::class);
     }
 
+    /**
+     * @return array
+     */
+    public function findDistinctModel()
+    {
+        return $this->createQueryBuilder('m')
+            ->select('DISTINCT m.name')
+            ->getQuery()
+            ->getResult()
+            ;
+    }
+
     // /**
     //  * @return Model[] Returns an array of Model objects
     //  */

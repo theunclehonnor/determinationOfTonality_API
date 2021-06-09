@@ -2,6 +2,10 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\Model;
+use App\Entity\ObjectInQuestion;
+use App\Entity\Report;
+use App\Entity\Resource;
 use App\Entity\User;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -25,13 +29,18 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('App');
+            ->setTitle('Административная панель Determination Of Tonality API');
     }
 
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linktoDashboard('Dashboard', 'fa fa-home');
         yield MenuItem::linkToCrud('Пользователи', 'fas fa-users', User::class);
+        yield MenuItem::linkToCrud('Отчеты', 'fas fa-file', Report::class);
+        yield MenuItem::linkToCrud('Рассматриваемые объекты', 'fas fa-eye', ObjectInQuestion::class);
+        yield MenuItem::linkToCrud('Веб-ресурсы', 'fas fa-globe', Resource::class);
+        yield MenuItem::linkToCrud('Модели', 'fas fa-object-ungroup', Model::class);
+
         // yield MenuItem::linkToCrud('The Label', 'fas fa-list', EntityClass::class);
     }
 }
