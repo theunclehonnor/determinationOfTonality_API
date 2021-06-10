@@ -40,7 +40,5 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Рассматриваемые объекты', 'fas fa-eye', ObjectInQuestion::class);
         yield MenuItem::linkToCrud('Веб-ресурсы', 'fas fa-globe', Resource::class);
         yield MenuItem::linkToCrud('Модели', 'fas fa-object-ungroup', Model::class);
-
-        // yield MenuItem::linkToCrud('The Label', 'fas fa-list', EntityClass::class);
     }
 }
