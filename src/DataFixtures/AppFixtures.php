@@ -68,28 +68,28 @@ class AppFixtures extends Fixture
         $listModels->setName('BagOfWords');
         $listModels->setClassificator('MultinomialNB');
         $listModels->setDataSet('womenShop');
-//        $listModels->setPath('/bagOfWord_method/predict');
+        $listModels->setPath('/bagOfWord_method/predict');
         $manager->persist($listModels);
 
         $listModels = new Model();
         $listModels->setName('BagOfWords');
         $listModels->setClassificator('RandomForest');
         $listModels->setDataSet('womenShop');
-//        $listModels->setPath('/bagOfWord_method/predict');
+        $listModels->setPath('/bagOfWord_method/predict');
         $manager->persist($listModels);
 
         $listModels = new Model();
         $listModels->setName('BagOfWords');
         $listModels->setClassificator('MultinomialNB');
         $listModels->setDataSet('twitter');
-//        $listModels->setPath('/bagOfWord_method/predict');
+        $listModels->setPath('/bagOfWord_method/predict');
         $manager->persist($listModels);
 
         $listModels = new Model();
         $listModels->setName('BagOfWords');
         $listModels->setClassificator('RandomForest');
         $listModels->setDataSet('twitter');
-//        $listModels->setPath('/bagOfWord_method/predict');
+        $listModels->setPath('/bagOfWord_method/predict');
         $manager->persist($listModels);
 
         // Word2Vec
@@ -97,28 +97,28 @@ class AppFixtures extends Fixture
         $listModels->setName('Word2Vec');
         $listModels->setClassificator('MultinomialNB');
         $listModels->setDataSet('womenShop');
-//        $listModels->setPath('/word2Vec_method/predict');
+        $listModels->setPath('/word2Vec_method/predict');
         $manager->persist($listModels);
 
         $listModels = new Model();
         $listModels->setName('Word2Vec');
         $listModels->setClassificator('RandomForest');
         $listModels->setDataSet('womenShop');
-//        $listModels->setPath('/word2Vec_method/predict');
+        $listModels->setPath('/word2Vec_method/predict');
         $manager->persist($listModels);
 
         $listModels = new Model();
         $listModels->setName('Word2Vec');
         $listModels->setClassificator('MultinomialNB');
         $listModels->setDataSet('twitter');
-//        $listModels->setPath('/word2Vec_method/predict');
+        $listModels->setPath('/word2Vec_method/predict');
         $manager->persist($listModels);
 
         $listModels = new Model();
         $listModels->setName('Word2Vec');
         $listModels->setClassificator('RandomForest');
         $listModels->setDataSet('twitter');
-//        $listModels->setPath('/word2Vec_method/predict');
+        $listModels->setPath('/word2Vec_method/predict');
         $manager->persist($listModels);
     }
 

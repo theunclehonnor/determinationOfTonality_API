@@ -19,6 +19,11 @@ class ModelDTO
     /**
      * @Serializer\Type("string")
      */
+    private $path;
+
+    /**
+     * @Serializer\Type("string")
+     */
     private $classificator;
 
     /**
@@ -64,5 +69,15 @@ class ModelDTO
     public function setDescription(?string $description): void
     {
         $this->description = $description;
+    }
+
+    public function getPath()
+    {
+        return $this->path;
+    }
+
+    public function setPath(?string $path): void
+    {
+        $this->path = $path;
     }
 }

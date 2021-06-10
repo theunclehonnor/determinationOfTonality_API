@@ -286,6 +286,7 @@ class ParserController extends AbstractController
 
             $modelDto = new ModelDTO();
             $modelDto->setName($model->getName());
+            $modelDto->setPath($model->getPath());
             $modelDto->setDataSet($model->getDataSet());
             $modelDto->setClassificator($model->getClassificator());
             $modelDto->setDescription($model->getDescription());
@@ -612,6 +613,7 @@ class ParserController extends AbstractController
 
             $modelDto = new ModelDTO();
             $modelDto->setName($model->getName());
+            $modelDto->setPath($model->getPath());
             $modelDto->setDataSet($model->getDataSet());
             $modelDto->setClassificator($model->getClassificator());
             $modelDto->setDescription($model->getDescription());

@@ -29,15 +29,20 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Административная панель Determination Of Tonality API');
+            ->setTitle('Административная панель Determination Of Tonality API')
+            ;
     }
 
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linktoDashboard('Dashboard', 'fa fa-home');
         yield MenuItem::linkToCrud('Пользователи', 'fas fa-users', User::class);
-        yield MenuItem::linkToCrud('Отчеты', 'fas fa-file', Report::class);
-        yield MenuItem::linkToCrud('Рассматриваемые объекты', 'fas fa-eye', ObjectInQuestion::class);
+        yield MenuItem::linkToCrud('Отчеты', 'fas fa-file', Report::class)
+            ->setDefaultSort(['createdAt' => 'DESC'])
+        ;
+        yield MenuItem::linkToCrud('Рассматриваемые объекты', 'fas fa-eye', ObjectInQuestion::class)
+            ->setDefaultSort(['id' => 'DESC'])
+        ;
         yield MenuItem::linkToCrud('Веб-ресурсы', 'fas fa-globe', Resource::class);
         yield MenuItem::linkToCrud('Модели', 'fas fa-object-ungroup', Model::class);
     }
