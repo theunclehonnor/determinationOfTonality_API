@@ -29,13 +29,13 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Административная панель Determination Of Tonality API')
+            ->setTitle('Административная панель')
             ;
     }
 
     public function configureMenuItems(): iterable
     {
-        yield MenuItem::linktoDashboard('Dashboard', 'fa fa-home');
+//        yield MenuItem::linktoDashboard('Dashboard', 'fa fa-home');
         yield MenuItem::linkToCrud('Пользователи', 'fas fa-users', User::class);
         yield MenuItem::linkToCrud('Отчеты', 'fas fa-file', Report::class)
             ->setDefaultSort(['createdAt' => 'DESC'])

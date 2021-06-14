@@ -137,12 +137,20 @@ class UserController extends AbstractController
      *                      property="report",
      *                      type="object",
      *                      @OA\Property(
+     *                          property="id",
+     *                          type="integer",
+     *                      ),
+     *                      @OA\Property(
      *                          property="created_at",
      *                          type="string",
      *                      ),
      *                      @OA\Property(
      *                          property="file",
      *                          type="string",
+     *                      ),
+     *                      @OA\Property(
+     *                          property="accuracy",
+     *                          type="float",
      *                      ),
      *                      @OA\Property(
      *                          property="object_in_question",
@@ -267,11 +275,16 @@ class UserController extends AbstractController
                 $objectInQuestionDto->setModel($modelDto);
                 $objectInQuestionDto->setResource($resourceDto);
                 $objectInQuestionDto->setFileReviews($objectInQuestion->getFileReviews());
+                // accuracy
+                $jsonData = file_get_contents($objectInQuestion->getFileReviews());
+                $jsonData = json_decode($jsonData, true);
                 // reportDto
                 $reportDto = new ReportDTO();
+                $reportDto->setId($report->getId());
                 $reportDto->setFile($report->getFile());
                 $reportDto->setCreatedAt($report->getCreatedAt()->format('Y-m-d H:i:s'));
                 $reportDto->setObjectInQuestion($objectInQuestionDto);
+                $reportDto->setAccuracy($jsonData['accuracy']);
 
                 $reportsDto[] = $reportDto;
             }
